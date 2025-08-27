@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 # 1. 加载数据
 from sklearn.datasets import load_diabetes
 import torch
@@ -21,6 +22,8 @@ from torch import optim
 optimizer = optim.SGD(model.parameters(), lr=0.01)
 
 # 4. 训练模型
+losses = []
+
 from torch.utils import data
 from sklearn.metrics import r2_score
 def load_data(data_array, batch_size, is_train=True):
@@ -38,9 +41,10 @@ for epoch in range(epoch_num):
         l.backward() # 反向传播，计算梯度
         optimizer.step() # 更新参数
         optimizer.zero_grad() # 清空梯度
+    avg_l = losssum / (len(X_train) / batch_size) # 计算一个epoch的平均损失
+    losses.append(avg_l)
     if epoch % 10 == 0:
-        l = losssum / (len(X_train) / batch_size)
-        print(f'epoch: {epoch}, loss_train: {l:.4f}')
+        print(f'epoch: {epoch}, loss_train: {avg_l:.4f}')
 
 r2_train = r2_score(y_train, model(X_train).detach().numpy()) # 计算R2分数/这里的model已经是训练好的模型了
 print(f'R2_train score max: {r2_train:.4f}')
@@ -51,6 +55,14 @@ print(f'loss_test: {l:.4f}')
 
 r2_test = r2_score(y_test, model(X_test).detach().numpy()) # 计算测试集上的R2分数
 print(f'R2_test score: {r2_test:.4f}')
+
+# 6. 可视化
+plt.figure(figsize=(8,5))
+plt.plot(range(epoch_num), losses, label='MSE loss')
+plt.title('Linear Regression')
+plt.xlabel('epoch')
+plt.ylabel('MSE Loss')
+plt.show()
 
 # Q1：没有用测试集检验模型 →所有的R2和loss都放到测试数据上计算 ✔
 # Q2：每次R2的更新是用小的batch，随机性太大 →用整个训练集计算R2 ✔
